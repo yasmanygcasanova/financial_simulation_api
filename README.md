@@ -13,7 +13,7 @@ A Financial Simulation API é uma aplicação desenvolvida com FastAPI que permi
   - Margem de contribuição
 - Análise de crescimento mensal.
 - Geração de gráficos para visualização dos resultados.
-- **Validações Rigorosas:** Validações para entradas do usuário, garantindo que os dados sejam consistentes e dentro dos limites esperados.
+- Validações: Validações para entradas do usuário, garantindo que os dados sejam consistentes e dentro dos limites esperados.
 - **Testes Automatizados:** Testes unitários para garantir a funcionalidade correta do código.
 
 ## Estrutura do Projeto
@@ -21,23 +21,24 @@ A Financial Simulation API é uma aplicação desenvolvida com FastAPI que permi
     financial_simulation_api/
     │
     ├── app/
-    │ ├── init.py
+    │ ├── routers/
+    │ │  ├── init.py # Inicializa o pacote de rotas
+    │ │  └── api.py # Definição das rotas da API
+    │ ├── validation/
+    │ │   ├─ init.py
+    │ │   ├─ input_validation.py # Validações das entradas do usuário
+    │ │   ├─ exceptions.py # Exceções personalizadas
+    │ │   ├── config_validation.py # Validações da configuração
+    │ ├── init.py # Inicializa o pacote de validação
     │ ├── main.py # Arquivo principal da aplicação FastAPI
     │ ├── config.py # Carregamento e validação da configuração
     │ ├── models.py # Definição dos modelos Pydantic
     │ ├── simulation.py # Funções para simulação financeira
     │ ├── analysis.py # Funções para análise financeira
     │ ├── plotting.py # Funções para geração de gráficos
-    │ └── validation/
-    │ ├── init.py
-    │ ├── input_validation.py # Validações das entradas do usuário
-    │ ├── config_validation.py # Validações da configuração
-    │ └── exceptions.py # Exceções personalizadas
-    │
     ├── tests/ # Diretório para testes automatizados
     │ ├── init.py # (Opcional) Indica que este diretório é um pacote Python
     │ └── test_input_validation.py # Testes das validações de entrada
-    │
     ├── requirements.txt # Dependências do projeto
     └── config.json # Arquivo de configuração em formato JSON
 
@@ -59,74 +60,82 @@ A Financial Simulation API é uma aplicação desenvolvida com FastAPI que permi
 
 4. Crie um arquivo `config.json` na raiz do projeto com a seguinte estrutura:
 
-        {
-           "BASE_MONTHLY_SALES": 10000,
-           "SUPPLY_COST": 0.5,
-           "PACKAGING_COST": 0.2,
-           "DELIVERY_FEES": 0.1,
-           "ROYALTY_PERCENTAGE": 0.05,
-           "NATIONAL_MARKETING_PERCENTAGE": 0.1,
-           "TAX_PERCENTAGE": 0.15,
-           "FIXED_COSTS": 2000,
-           "LOCAL_MARKETING_COST": 500
-}
+       {
+         "BASE_MONTHLY_SALES": 10000,
+         "SUPPLY_COST": 0.5,
+         "PACKAGING_COST": 0.2,
+         "DELIVERY_FEES": 0.1,
+         "ROYALTY_PERCENTAGE": 0.05,
+         "NATIONAL_MARKETING_PERCENTAGE": 0.1,
+         "TAX_PERCENTAGE": 0.15,
+         "FIXED_COSTS": 2000,
+         "LOCAL_MARKETING_COST": 500
+       }
 
-## Uso
+## Endpoints da API
 
-### Para iniciar a aplicação, execute o seguinte comando:
+### 1. Simulação de Vendas
 
-    uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+- **Endpoint:** `/api/v1/simulate`
+- **Método:** `POST`
+- **Descrição:** Simula vendas mensais com base na sazonalidade, taxa de crescimento e investimento inicial.
+- **Corpo da Requisição:**
+    ```
+    {
+        "seasonality": [0.1, 0.2, 0.3, 0.1, 0.05, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35],
+        "growth_rate": 0.05,
+        "initial_investment": 10000
+    }
+    ```
+- **Resposta:**
+    ```
+    [
+        {"month": 1, "sales": 10500},
+        {"month": 2, "sales": 10750},
+        ...
+    ]
+    ```
 
+### 2. Análise Financeira
 
+- **Endpoint:** `/api/v1/analyze`
+- **Método:** `POST`
+- **Descrição:** Realiza análise financeira com base nos resultados da simulação.
+- **Corpo da Requisição:** Mesma estrutura que o endpoint de simulação.
+- **Resposta:**
+    ```
+    {
+        "total_revenue": 120000,
+        "profit_margin": 0.25,
+        ...
+    }
+    ```
 
-A API estará disponível em `http://localhost:8000`. 
-Você pode acessar a documentação interativa da API em `http://localhost:8000/docs`.
+### 3. Cálculo da Taxa de Crescimento Mensal
 
-### Endpoints
+- **Endpoint:** `/api/v1/growth-rate`
+- **Método:** `POST`
+- **Descrição:** Calcula a taxa de crescimento mensal com base nos resultados da simulação.
+- **Corpo da Requisição:** Mesma estrutura que o endpoint de simulação.
+- **Resposta:**
+    ```
+    {
+        "monthly_growth_rate": 5.5
+    }
+    ```
 
-1. **POST /simulate**
-   - Simula as vendas ajustadas com base na sazonalidade e taxa de crescimento.
-   - **Payload:**
-     ```
-     {
-         "seasonality": [0.1, -0.05, 0.02, 0.15, 0.2, 0.1, -0.1, -0.15, 0.05, 0.1, 0.15, 0.3],
-         "growth_rate": 0.05,
-         "initial_investment": 100000
-     }
-     ```
+### 4. Geração de Gráficos
 
-2. **POST /analyze**
-   - Realiza a análise financeira com base nos resultados da simulação.
-   - **Payload:**
-     ```
-     {
-         "seasonality": [0.1, -0.05, 0.02, 0.15, 0.2, 0.1, -0.1, -0.15, 0.05, 0.1, 0.15, 0.3],
-         "growth_rate": 0.05,
-         "initial_investment": 100000
-     }
-     ```
-
-3. **POST /growth-rate**
-   - Calcula a taxa de crescimento mensal com base nos resultados da simulação.
-   - **Payload:**
-     ```
-     {
-         "seasonality": [0.1, -0.05, 0.02, 0.15, 0.2, 0.1, -0.1, -0.15, 0.05, 0.1, 0.15, 0.3],
-         "growth_rate": 0.05,
-         "initial_investment": 100000
-     }
-     ```
-
-4. **POST /plot**
-   - Gera um gráfico baseado nos resultados da simulação.
-   - **Payload:**
-     ```
-     {
-         "seasonality": [0.1, -0.05, 0.02, 0.15, 0.2, 0.1, -0.1, -0.15, 0.05, 0.1, 0.15, 0.3],
-         "growth_rate": 0.05,
-         "initial_investment": 100000
-     }
-     ```
+- **Endpoint:** `/api/v1/plot`
+- **Método:** `POST`
+- **Descrição:** Gera gráficos com base nos resultados da simulação.
+- **Corpo da Requisição:** Mesma estrutura que o endpoint de simulação.
+- **Resposta:**
+    ```
+    {
+        "image": "URL_do_grafico_gerado"
+    }
+    ```
 
 ## Configuração do Ambiente de Desenvolvimento
 
@@ -243,7 +252,7 @@ Para implantar seu serviço no Cloud Run, siga estas etapas:
 
 1. **Navegue até o diretório do seu projeto:**
         
-       cd /path/to/financial_simulation/
+       cd /path/to/financial_simulation_api/
 
 2. **Execute o comando `gcloud run deploy`:**
 
@@ -347,4 +356,8 @@ Após configurar tudo, faça um commit e um push das suas alterações para o br
 
 Você pode monitorar os resultados da execução do pipeline na aba "Actions" do seu repositório no GitHub. Isso permitirá que você veja se os testes passaram e se a implantação foi bem-sucedida.
 
+### Link Ref para visualizar a imagem gerada no endpoint: 
 
+http://localhost:8000/api/v1/plot
+
+    URL: https://base64.guru/converter/decode/image
